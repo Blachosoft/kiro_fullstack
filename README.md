@@ -151,65 +151,12 @@ El `template.yaml` requiere estos parámetros en el despliegue:
 
 > Pantalla principal del POS mostrando el panel de búsqueda con productos activos cargados desde `/api/products`. El panel de categorías se pobla automáticamente con los valores distintos de `subcategoria`.
 
-*(Agregar captura aquí)*
+<img width="1918" height="917" alt="image" src="https://github.com/user-attachments/assets/1320c2f1-2abe-4529-a620-fb5b800e2132" />
 
----
+<img width="1122" height="837" alt="image" src="https://github.com/user-attachments/assets/7ef259f1-3f53-4bbd-b8f2-8c7eb47fc37a" />
 
-### Registro de una venta exitosa con respuesta del API visible
+<img width="1915" height="933" alt="image" src="https://github.com/user-attachments/assets/49fc1d3c-4a83-473e-887c-b8abdc24996b" />
 
-> Flujo completo: búsqueda de producto → agregar al carrito → selección de método de pago → confirmación. Se muestra el modal de recibo con el ID de transacción generado por el backend (`POST /api/sales/{id}/checkout`).
-
-*(Agregar captura aquí)*
-
----
-
-### Manejo de un error — API caído o respuesta inválida
-
-> Cuando el API Gateway no responde o retorna un error, el POS muestra el mensaje "No se pudieron cargar productos. Revise la conexión." en el panel de búsqueda y "Barcode lookup failed. Try again." en el escáner, sin romper la sesión activa.
-
-*(Agregar captura aquí)*
-
----
-
-## Proceso SDD — Cómo los specs guiaron la implementación
-
-Este proyecto fue construido siguiendo **Spec-Driven Development (SDD)** con Kiro. El flujo fue:
-
-```
-Descripción en lenguaje natural
-        ↓
-Kiro genera specs estructurados
-        ↓
-Revisión y refinamiento manual
-        ↓
-Kiro implementa siguiendo los specs
-        ↓
-Validación con tests
-```
-
-### Los tres archivos de spec
-
-Los specs viven en `.kiro/specs/` y fueron la única fuente de verdad durante la implementación:
-
-| Archivo | Propósito | Decisiones que tomó |
-|---------|-----------|---------------------|
-| `requirements.md` | Historias de usuario + criterios de aceptación | Definió los 10 requisitos del POS frontend y los 10 del Sales API, incluyendo los mensajes de error exactos que aparecen en el código |
-| `design.md` | Arquitectura, componentes, modelo de datos | Determinó la separación en módulos ES6 (`api.js`, `cart.js`, `search.js`, `scanner.js`), el uso de `apiFetch` como wrapper central, y el modelo de `Sale` con sus transiciones de estado |
-| `tasks.md` | Pasos de implementación ordenados | Guió el orden: primero autenticación, luego carrito, luego pagos — evitando deuda técnica por dependencias entre módulos |
-
-### Cómo los specs evitaron decisiones ad-hoc
-
-**Ejemplo 1 — Mensajes de error consistentes:**
-El `requirements.md` especificó los textos exactos ("No se encontraron productos para '{term}'", "Barcode lookup failed. Try again."). Kiro los implementó literalmente en `search.js` y `scanner.js`, garantizando coherencia sin revisión manual de cada mensaje.
-
-**Ejemplo 2 — Transiciones de estado del Sale:**
-El spec de diseño definió el diagrama de estados (`ACTIVE → FROZEN → ACTIVE`, `COMPLETED → RETURNED`). El `SaleService` implementa exactamente esas transiciones y rechaza operaciones inválidas, sin lógica ambigua.
-
-**Ejemplo 3 — Separación de responsabilidades en el frontend:**
-El spec indicó que `apiFetch` debía ser el único punto de entrada HTTP (con inyección automática de JWT y manejo de 401/403). Esto evitó que cada módulo reimplementara manejo de errores, y fue la base para el cambio posterior que separó la URL de productos de la de ventas con `options.baseUrl`.
-
-**Ejemplo 4 — Arquitectura serverless:**
-El `design.md` del backend especificó el `LambdaHandler` como adaptador entre API Gateway y Spring Boot. Kiro generó `LambdaHandler.java` usando `SpringBootLambdaContainerHandler`, lo que permitió que el mismo código corriera localmente con `mvn spring-boot:run` y en AWS Lambda sin modificaciones.
 
 ---
 
