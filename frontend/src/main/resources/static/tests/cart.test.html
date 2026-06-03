@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CartStore Tests</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background: #f4f6f9;
+      color: #111827;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 8px; }
+    #summary {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin: 16px 0;
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid #d1d5db;
+    }
+    #summary.all-pass { border-color: #16a34a; color: #16a34a; }
+    #summary.has-fail  { border-color: #dc2626; color: #dc2626; }
+    #results { list-style: none; padding: 0; margin: 0; }
+    #results li {
+      padding: 10px 14px;
+      margin-bottom: 6px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    #results li.pass { background: #dcfce7; color: #166534; }
+    #results li.fail { background: #fee2e2; color: #991b1b; }
+    .badge {
+      font-weight: bold;
+      font-size: 0.8rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .badge.pass { background: #16a34a; color: #fff; }
+    .badge.fail { background: #dc2626; color: #fff; }
+    #running { color: #6b7280; font-style: italic; }
+  </style>
+</head>
+<body>
+  <h1>CartStore Unit Tests</h1>
+  <p id="running">Running tests…</p>
+  <div id="summary" style="display:none"></div>
+  <ul id="results"></ul>
+
+  <script type="module">
+    import { runAll } from "./cart.test.js";
+
+    // Collect results written by the test file
+    window.__results = [];
+
+    const resultsList = document.getElementById("results");
+    const summaryEl   = document.getElementById("summary");
+    const runningEl   = document.getElementById("running");
+
+    // Run all tests, then render
+    runAll().then(({ passed, failed }) => {
+      runningEl.style.display = "none";
+
+      // Render individual results
+      for (const { ok, message } of window.__results) {
+        const li = document.createElement("li");
+        li.className = ok ? "pass" : "fail";
+        const badge = document.createElement("span");
+        badge.className = `badge ${ok ? "pass" : "fail"}`;
+        badge.textContent = ok ? "PASS" : "FAIL";
+        li.appendChild(badge);
+        li.appendChild(document.createTextNode(message));
+        resultsList.appendChild(li);
+      }
+
+      // Summary
+      summaryEl.style.display = "block";
+      summaryEl.textContent = `${passed} passed, ${failed} failed`;
+      summaryEl.className = failed === 0 ? "all-pass" : "has-fail";
+    });
+  </script>
+</body>
+</html>

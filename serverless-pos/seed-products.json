@@ -1,0 +1,38 @@
+[
+  {
+    "PutRequest": {
+      "Item": {
+        "id": { "N": "1" },
+        "name": { "S": "Arroz Premium" },
+        "barcode": { "S": "1" },
+        "unitPrice": { "N": "5200" },
+        "availableStock": { "N": "999" },
+        "category": { "S": "Granos" }
+      }
+    }
+  },
+  {
+    "PutRequest": {
+      "Item": {
+        "id": { "N": "3" },
+        "name": { "S": "Jabón Líquido" },
+        "barcode": { "S": "3" },
+        "unitPrice": { "N": "8900" },
+        "availableStock": { "N": "999" },
+        "category": { "S": "Aseo" }
+      }
+    }
+  },
+  {
+    "PutRequest": {
+      "Item": {
+        "id": { "N": "4" },
+        "name": { "S": "Azúcar Morena" },
+        "barcode": { "S": "4" },
+        "unitPrice": { "N": "4300" },
+        "availableStock": { "N": "999" },
+        "category": { "S": "Granos" }
+      }
+    }
+  }
+]

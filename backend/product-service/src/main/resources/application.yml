@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: product-service
+
+server:
+  port: 8081
+
+products:
+  table-name: ${PRODUCTS_TABLE_NAME:Products}

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POS · Iniciar sesión</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/login.css" />
+</head>
+<body>
+  <div class="shell">
+
+    <!-- LEFT BRAND PANEL -->
+    <aside class="brand-panel">
+      <div class="brand-panel__inner">
+        <div class="brand-logo">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <rect width="36" height="36" rx="10" fill="#E8FF5A"/>
+            <path d="M10 24L14 14L18 20L22 16L26 24H10Z" fill="#0a0a0a"/>
+          </svg>
+          <span class="brand-name">POS System</span>
+        </div>
+
+        <div class="brand-headline">
+          <h1>Control total<br/>de tu punto<br/>de venta.</h1>
+        </div>
+
+        <div class="brand-stats">
+          <div class="stat">
+            <span class="stat__value">DynamoDB</span>
+            <span class="stat__label">Base de datos</span>
+          </div>
+          <div class="stat">
+            <span class="stat__value">Lambda</span>
+            <span class="stat__label">Serverless</span>
+          </div>
+          <div class="stat">
+            <span class="stat__value">SAM</span>
+            <span class="stat__label">Deploy</span>
+          </div>
+        </div>
+
+        <div class="brand-creds">
+          <p class="brand-creds__title">Credenciales demo</p>
+          <code>admin / admin123</code>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT LOGIN FORM -->
+    <main class="login-panel">
+      <div class="login-card">
+        <div class="login-card__header">
+          <h2>Bienvenido</h2>
+          <p>Ingresa tus credenciales para continuar</p>
+        </div>
+
+        <div id="loginMessage" class="login-msg"></div>
+
+        <form id="loginForm" autocomplete="off" class="login-form">
+          <div class="field">
+            <label for="usuario">Usuario</label>
+            <input type="text" id="usuario" placeholder="admin" required autocomplete="off"/>
+          </div>
+          <div class="field">
+            <label for="contrasena">Contraseña</label>
+            <input type="password" id="contrasena" placeholder="••••••••" required />
+          </div>
+          <button type="submit" class="btn-login">
+            <span>Ingresar</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="/config.js"></script>
+  <script src="/login.js"></script>
+</body>
+</html>

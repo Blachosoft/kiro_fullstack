@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POS | Punto de Venta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/pos.css" />
+  <script src="https://unpkg.com/@zxing/browser@latest/umd/index.min.js"></script>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="pos-header">
+    <div class="pos-header__brand">
+      <span class="pos-header__logo">⬡</span>
+      <span class="pos-header__title">POS System</span>
+    </div>
+    <div class="pos-header__info">
+      <span id="header-datetime" class="pos-header__datetime"></span>
+      <span id="header-cashier" class="pos-header__cashier"></span>
+      <button id="shortcuts-btn" class="btn btn-shortcuts btn--sm" title="Atajos de teclado (F1)">
+        <span class="shortcuts-btn__icon">⌨</span>
+        Atajos
+        <kbd class="shortcuts-btn__badge">F1</kbd>
+      </button>
+      <button id="logout-btn" class="btn btn-secondary btn--sm">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <!-- ===== MAIN ===== -->
+  <main class="pos-main">
+
+    <!-- LEFT: Search + Discount -->
+    <section class="pos-left" aria-label="Búsqueda de productos y descuentos">
+
+      <div class="panel" id="search-panel">
+        <h2 class="panel__title">Productos frecuentes</h2>
+        <ul id="quick-products" class="quick-products" role="list" aria-label="Productos frecuentes"></ul>
+
+        <h2 class="panel__title" style="margin-top:8px">Buscar producto</h2>
+        <div class="search-inputs">
+          <input
+            type="text"
+            id="search-name"
+            class="input"
+            placeholder="Nombre del producto…"
+            aria-label="Buscar por nombre"
+            autocomplete="off"
+          />
+          <select id="search-category" class="input select" aria-label="Filtrar por categoría">
+            <option value="">Todas</option>
+          </select>
+        </div>
+        <ul id="search-results" class="search-results" role="listbox" aria-label="Resultados"></ul>
+      </div>
+
+      <div id="order-discount-section" class="panel order-discount-section">
+        <h2 class="panel__title">Descuento de orden</h2>
+        <div class="order-discount-inputs">
+          <select id="order-discount-type" class="input select select--sm" aria-label="Tipo de descuento">
+            <option value="percent">% Porcentaje</option>
+            <option value="fixed">$ Monto fijo</option>
+          </select>
+          <input
+            type="number"
+            id="order-discount-value"
+            class="input input--sm"
+            placeholder="0"
+            min="0"
+            aria-label="Valor del descuento"
+          />
+          <button id="order-discount-apply-btn" class="btn btn-secondary btn--sm">Aplicar</button>
+          <button id="order-discount-remove-btn" class="btn btn-danger btn--sm" style="display:none;">Quitar</button>
+        </div>
+        <div id="order-discount-error" class="inline-error" role="alert" aria-live="polite"></div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT: Cart -->
+    <section class="pos-right" aria-label="Carrito de compras">
+
+      <div class="panel cart-panel" id="cart-panel">
+
+        <div class="cart-heading">
+          <div>
+            <h2 class="panel__title" style="margin-bottom:4px">Venta actual</h2>
+            <p class="cart-heading__hint">Agrega productos y procesa el pago.</p>
+          </div>
+          <span id="cart-count" class="cart-count">0 artículos</span>
+        </div>
+
+        <div class="cart-list-header" aria-hidden="true">
+          <span>Producto</span>
+          <span style="text-align:center">Cant.</span>
+          <span style="text-align:right">Unit.</span>
+          <span style="text-align:right">Total</span>
+          <span></span>
+        </div>
+
+        <ul id="cart-items" class="cart-items" role="list" aria-label="Artículos en el carrito"></ul>
+
+        <div class="cart-footer">
+          <div class="cart-totals">
+            <div class="cart-total-row">
+              <span>Subtotal</span>
+              <span id="cart-subtotal" class="price">$0.00</span>
+            </div>
+            <div class="cart-total-row">
+              <span>Descuento</span>
+              <span id="cart-discount" class="price price--discount">-$0.00</span>
+            </div>
+            <div class="cart-total-row cart-total-row--grand">
+              <span>TOTAL</span>
+              <span id="cart-total" class="price price--total">$0.00</span>
+            </div>
+          </div>
+
+          <div class="cart-actions">
+            <button id="clear-cart-btn" class="btn btn-danger">Vaciar</button>
+            <button id="proceed-payment-btn" class="btn btn-primary btn--large" disabled>
+              Proceder al pago →
+            </button>
+          </div>
+
+          <p id="cart-empty-msg" class="cart-empty-msg">
+            El carrito está vacío. Busca productos para comenzar.
+          </p>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- ===== PAYMENT MODAL ===== -->
+  <div id="payment-modal" class="modal-overlay" role="dialog" aria-modal="true"
+       aria-labelledby="payment-modal-title" style="display:none;">
+    <div class="modal-box">
+      <h2 id="payment-modal-title" class="modal-title">Procesar pago</h2>
+
+      <div class="payment-total-display">
+        <span>Total a pagar</span>
+        <span id="payment-grand-total" class="price price--total">$0.00</span>
+      </div>
+
+      <div class="payment-method-selector" role="group" aria-label="Método de pago">
+        <label class="payment-method-option">
+          <input type="radio" name="payment-method" value="cash" checked /> Efectivo
+        </label>
+        <label class="payment-method-option">
+          <input type="radio" name="payment-method" value="card" /> Tarjeta
+        </label>
+        <label class="payment-method-option">
+          <input type="radio" name="payment-method" value="mixed" /> Mixto
+        </label>
+      </div>
+
+      <div id="payment-inputs" class="payment-inputs">
+
+        <div id="payment-cash-section" class="payment-section">
+          <label for="payment-cash-amount">Monto en efectivo</label>
+          <input type="number" id="payment-cash-amount" class="input" min="0" step="0.01"
+                 placeholder="0.00" aria-label="Monto en efectivo" />
+          <div class="payment-info-row">
+            <span>Cambio:</span>
+            <span id="payment-change-due" class="price price--success">$0.00</span>
+          </div>
+        </div>
+
+        <div id="payment-card-section" class="payment-section" style="display:none;">
+          <label for="payment-card-amount">Monto con tarjeta</label>
+          <input type="number" id="payment-card-amount" class="input" min="0" step="0.01"
+                 placeholder="0.00" aria-label="Monto con tarjeta" />
+          <label class="payment-card-confirm-label">
+            <input type="checkbox" id="payment-card-confirm" />
+            Pago con tarjeta confirmado
+          </label>
+        </div>
+
+        <div id="payment-mixed-section" class="payment-section" style="display:none;">
+          <label for="payment-mixed-cash">Monto en efectivo</label>
+          <input type="number" id="payment-mixed-cash" class="input" min="0" step="0.01"
+                 placeholder="0.00" aria-label="Monto en efectivo (mixto)" />
+          <label for="payment-mixed-card">Monto con tarjeta</label>
+          <input type="number" id="payment-mixed-card" class="input" min="0" step="0.01"
+                 placeholder="0.00" aria-label="Monto con tarjeta (mixto)" />
+          <div class="payment-info-row">
+            <span>Saldo restante:</span>
+            <span id="payment-remaining" class="price">$0.00</span>
+          </div>
+          <div class="payment-info-row">
+            <span>Cambio:</span>
+            <span id="payment-mixed-change" class="price price--success">$0.00</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="payment-error" class="inline-error" role="alert" aria-live="polite"></div>
+
+      <div class="modal-actions">
+        <button id="payment-cancel-btn" class="btn btn-secondary">Cancelar</button>
+        <button id="payment-confirm-btn" class="btn btn-primary" disabled>Confirmar pago</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RECEIPT MODAL ===== -->
+  <div id="receipt-modal" class="modal-overlay" role="dialog" aria-modal="true"
+       aria-labelledby="receipt-modal-title" style="display:none;">
+    <div class="modal-box modal-box--receipt">
+      <h2 id="receipt-modal-title" class="modal-title">Recibo de venta</h2>
+      <div id="receipt-content" class="receipt-content"></div>
+      <div class="modal-actions">
+        <button id="receipt-print-btn" class="btn btn-secondary">Imprimir</button>
+        <button id="receipt-new-btn" class="btn btn-primary">Nueva transacción</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SHORTCUTS MODAL ===== -->
+  <div id="shortcuts-modal" class="modal-overlay" role="dialog" aria-modal="true"
+       aria-labelledby="shortcuts-modal-title" style="display:none;">
+    <div class="modal-box modal-box--shortcuts">
+
+      <div class="shortcuts-header">
+        <div class="shortcuts-header__left">
+          <span class="shortcuts-header__icon">⌨</span>
+          <h2 id="shortcuts-modal-title" class="modal-title">Atajos de teclado</h2>
+        </div>
+        <button id="shortcuts-close-btn" class="btn btn-secondary btn--sm">✕ Cerrar</button>
+      </div>
+
+      <p class="shortcuts-note">
+        <kbd class="shortcuts-key">F1</kbd> o <kbd class="shortcuts-key">?</kbd> abre y cierra este panel desde cualquier pantalla.
+      </p>
+
+      <div class="shortcuts-grid">
+
+        <section class="shortcuts-section">
+          <h3 class="shortcuts-title">🔍 Búsqueda</h3>
+          <ul class="shortcuts-list" role="list">
+            <li class="shortcuts-item">
+              <span class="shortcuts-keys-group">
+                <kbd class="shortcuts-key">F2</kbd>
+                <span class="shortcuts-key-sep">o</span>
+                <kbd class="shortcuts-key">/</kbd>
+              </span>
+              <span class="shortcuts-desc">Enfocar búsqueda</span>
+            </li>
+            <li class="shortcuts-item">
+              <kbd class="shortcuts-key">F3</kbd>
+              <span class="shortcuts-desc">Filtrar por categoría</span>
+            </li>
+            <li class="shortcuts-item">
+              <kbd class="shortcuts-key">↓</kbd>
+              <span class="shortcuts-desc">Navegar resultados</span>
+            </li>
+            <li class="shortcuts-item">
+              <kbd class="shortcuts-key">Enter</kbd>
+              <span class="shortcuts-desc">Agregar primer resultado</span>
+            </li>
+          </ul>
+        </section>
+
+        <section class="shortcuts-section">
+          <h3 class="shortcuts-title">🛒 Carrito</h3>
+          <ul class="shortcuts-list" role="list">
+            <li class="shortcuts-item">
+              <kbd class="shortcuts-key">F4</kbd>
+              <span class="shortcuts-desc">Ir a descuento de orden</span>
+            </li>
+            <li class="shortcuts-item">
+              <kbd class="shortcuts-key">F8</kbd>
+              <span class="shortcuts-desc">Proceder al pago</span>
+            </li>
+            <li class="shortcuts-item">
+              <span class="shortcuts-keys-group">
+                <kbd class="shortcuts-key">Ctrl</kbd>
+                <span class="shortcuts-key-sep">+</span>
+                <kbd class="shortcuts-key">←</kbd>
+              </span>
+              <span class="shortcuts-desc">Vaciar carrito</span>
+            </li>
+          </ul>
+        </section>
+
+        <section class="shortcuts-section">
+          <h3 class="shortcuts-title">💳 Pago</h3>
+          <ul class="shortcuts-list" role="list">
+            <li class="shortcuts-item">
+              <kbd class="shortcuts-key">Enter</kbd>
+              <span class="shortcuts-desc">Confirmar pago</span>
+            </li>
+            <li class="shortcuts-item">
+              <kbd class="shortcuts-key">Esc</kbd>
+              <span class="shortcuts-desc">Cancelar / cerrar modal</span>
+            </li>
+          </ul>
+        </section>
+
+        <section class="shortcuts-section">
+          <h3 class="shortcuts-title">❓ Ayuda</h3>
+          <ul class="shortcuts-list" role="list">
+            <li class="shortcuts-item">
+              <span class="shortcuts-keys-group">
+                <kbd class="shortcuts-key">F1</kbd>
+                <span class="shortcuts-key-sep">o</span>
+                <kbd class="shortcuts-key">?</kbd>
+              </span>
+              <span class="shortcuts-desc">Abrir / cerrar atajos</span>
+            </li>
+          </ul>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="/config.js"></script>
+  <script type="module" src="/pos.js"></script>
+</body>
+</html>

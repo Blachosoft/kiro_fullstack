@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "nombre": "Arroz Premium",
+    "descripcion": "Arroz blanco de alta calidad",
+    "subcategoria": "Granos",
+    "precio": 5200.0,
+    "precioxcantidad": 1100.0,
+    "estado": "activo"
+  },
+  {
+    "id": 2,
+    "nombre": "Aceite Vegetal",
+    "descripcion": "Aceite para cocina de 1 litro",
+    "subcategoria": "Despensa",
+    "precio": 14500.0,
+    "precioxcantidad": 14500.0,
+    "estado": "activo"
+  }
+]

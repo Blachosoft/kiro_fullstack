@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: POS microservices behind API Gateway.
+
+Parameters:
+  DatabaseUrl:
+    Type: String
+    Description: JDBC URL for the PostgreSQL/RDS database.
+  DatabaseUsername:
+    Type: String
+    Description: Database username.
+  DatabasePassword:
+    Type: String
+    NoEcho: true
+    Description: Database password.
+  ProductApiBaseUrl:
+    Type: String
+    Description: Base URL for the Product microservice exposed by API Gateway.
+  CustomerApiBaseUrl:
+    Type: String
+    Description: Base URL for the Customer microservice exposed by API Gateway.
+
+Globals:
+  Function:
+    Runtime: java17
+    MemorySize: 1024
+    Timeout: 30
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        SPRING_PROFILES_ACTIVE: aws
+        DATABASE_URL: !Ref DatabaseUrl
+        DATABASE_USERNAME: !Ref DatabaseUsername
+        DATABASE_PASSWORD: !Ref DatabasePassword
+        PRODUCT_API_BASE_URL: !Ref ProductApiBaseUrl
+        CUSTOMER_API_BASE_URL: !Ref CustomerApiBaseUrl
+
+Resources:
+  PosRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+
+  ProductsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: N
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  SalesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: com.supermarket.sales.aws.LambdaHandler::handleRequest
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        SalesRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PosRestApi
+            Path: /api/sales
+            Method: ANY
+        SalesProxy:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PosRestApi
+            Path: /api/sales/{proxy+}
+            Method: ANY
+        CustomerSearchProxy:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PosRestApi
+            Path: /api/customers/search
+            Method: GET
+
+  ProductFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: product-service
+      Handler: com.supermarket.products.aws.LambdaHandler::handleRequest
+      Environment:
+        Variables:
+          PRODUCTS_TABLE_NAME: !Ref ProductsTable
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ProductsTable
+      Events:
+        ProductRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PosRestApi
+            Path: /api/products
+            Method: ANY
+        ProductProxy:
+          Type: Api
+          Properties:
+            RestApiId: !Ref PosRestApi
+            Path: /api/products/{proxy+}
+            Method: ANY
+
+Outputs:
+  ApiBaseUrl:
+    Description: API Gateway base URL.
+    Value: !Sub https://${PosRestApi}.execute-api.${AWS::Region}.amazonaws.com/prod
+  SalesFunctionName:
+    Description: Sales Lambda function name.
+    Value: !Ref SalesFunction
+  ProductFunctionName:
+    Description: Product Lambda function name.
+    Value: !Ref ProductFunction
+  ProductsTableName:
+    Description: Products DynamoDB table name.
+    Value: !Ref ProductsTable

@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+sales:
+  store-name: ${SALES_STORE_NAME:Supermarket POS}
+  tax-rate: ${SALES_TAX_RATE:0.19}
+  freeze-expiration: ${SALES_FREEZE_EXPIRATION:2h}
+  external:
+    product-api:
+      base-url: ${PRODUCT_API_BASE_URL}
+      connect-timeout: ${PRODUCT_API_CONNECT_TIMEOUT:2s}
+      read-timeout: ${PRODUCT_API_READ_TIMEOUT:5s}
+    customer-api:
+      base-url: ${CUSTOMER_API_BASE_URL}
+      connect-timeout: ${CUSTOMER_API_CONNECT_TIMEOUT:2s}
+      read-timeout: ${CUSTOMER_API_READ_TIMEOUT:5s}

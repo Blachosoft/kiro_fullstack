@@ -1,0 +1,101 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Simple POS API with API Gateway, Lambda, DynamoDB products, and DynamoDB sales.
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 15
+    MemorySize: 256
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        PRODUCTS_TABLE_NAME: !Ref ProductsTable
+        SALES_TABLE_NAME: !Ref SalesTable
+
+Resources:
+  PosApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+
+  PosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: app.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ProductsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SalesTable
+      Events:
+        Auth:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /api/auth
+            Method: POST
+        Products:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /api/products
+            Method: ANY
+        ProductSearch:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /api/products/search
+            Method: GET
+        Sales:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref PosApi
+            Path: /api/sales
+            Method: POST
+
+  ProductsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Bladimir-Products
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: N
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  SalesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Bladimir-Sales
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+Outputs:
+  ApiBaseUrl:
+    Description: Base URL for the POS API.
+    Value: !Sub https://${PosApi}.execute-api.${AWS::Region}.amazonaws.com
+  ProductsTableName:
+    Description: DynamoDB table for products.
+    Value: !Ref ProductsTable
+  SalesTableName:
+    Description: DynamoDB table for sales.
+    Value: !Ref SalesTable
